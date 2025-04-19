@@ -1,0 +1,289 @@
+__________________________________________________________________________________
+.................................................................................................
+
+java techie video 2hrs k8s      19/04/2025
+
+k8s is a conatiner managememt tool
+
+
+conatiner ....docker is a application where you can run any application tool
+managememt ......take care of deploying , scheduling , scaling  , load balancing of yoyr application 
+
+
+you write your code and push your image to conatiner like docker and rest k8s will take care 
+
+
+***K8s components
+
+cluster --> node --> Pod ---> conatiner
+each pod has a sepaarte ip addres 
+
+replica set ----> backup of pod --one pod down , new will craete and start 
+
+
+**************************Service *********************
+
+Service --------one pod gone down new pod with new ip 
+multiple pod can be group together into single service with lables and selectors 
+
+Kubernetes: Why Services Came into the Picture
+
+1. Problem: Pods are Temporary (Ephemeral)
+   - Pods can be deleted or recreated at any time.
+   - Every time a Pod is recreated, it gets a new IP address.
+   - So directly connecting to Pods is unreliable.
+   - ✅ Solution: Service gives a stable IP and DNS name to access Pods.
+
+2. Problem: Load Balancing is Needed
+   - Deployments create multiple replicas of the same Pod.
+   - Traffic needs to be evenly distributed between all replicas.
+   - ✅ Solution: Service automatically load balances traffic across all matching Pods.
+
+3. Problem: Internal and External Communication
+   - Microservices need to talk to each other (like frontend → backend).
+   - Sometimes apps need to be exposed to the internet.
+   - ✅ Solution: Kubernetes provides different Service types:
+
+     - ClusterIP: Internal access only (default type).
+     - NodePort: Exposes the app on a specific port of each node.
+     - LoadBalancer: Exposes the app to the internet using a cloud load balancer.
+     - ExternalName: Maps the service to an external DNS name.
+
+Summary:
+- Pod IPs keep changing → Service gives stable IP and DNS.
+- Multiple replicas → Service handles load balancing.
+- Internal and external communication → Use Service types (ClusterIP, NodePort, LoadBalancer, ExternalName).
+
+----------
+
+*****deployment *******
+
+deployment are k8s objects that are used for manganing the pods 
+
+kubectl create deployment spring-boot-k8s --image=springboot-k8s-demo:1.0 --port=8080 --replicas=4
+
+you can craete this by using yaml file too 
+
+Summary:
+- Manual Pod management is painful → Deployment automates it.
+- Pod crashes → Deployment recreates them automatically (self-healing).
+- Updating apps → Deployment supports rolling updates.
+- Scaling needed → Deployment allows quick and easy scaling.
+
+******secrets and config map ******
+use to store sensititive info of uour app like pass ,secretskey or apikey 
+they are placed outside pod and insid node . why two diff comp secrets and config map
+in scerets its stores in encrypt form while in config map it stores in plain text
+
+
+Summary:
+- Hardcoded config → Use ConfigMaps to keep config flexible.
+- Sensitive data in code → Use Secrets to store it securely.
+- Same app, different configs → ConfigMaps/Secrets help manage environments.
+- Need to update config without code change → ConfigMaps/Secrets can be mounted or injected easily.
+
+********ETCD**********
+
+Kubernetes: Why etcd Came into the Picture
+
+1. Problem: Kubernetes Needs to Store Cluster State
+   - Kubernetes has to remember all cluster data like:
+     - What Pods are running?
+     - What Nodes are part of the cluster?
+     - What Deployments, Services, ConfigMaps, Secrets exist?
+   - This data needs to be stored somewhere reliably.
+   - ✅ Solution: etcd stores the complete cluster state as key-value pairs.
+
+2. Problem: High Availability and Consistency Required
+   - Cluster data must be safe even if one node crashes.
+   - Data must be consistent across all components.
+   - ✅ Solution: etcd is a distributed, consistent, highly available key-value store.
+
+3. Problem: Fast Access and Coordination Between Components
+   - Kubernetes components like API Server, Scheduler, Controller Manager need fast access to current data.
+   - ✅ Solution: etcd allows fast reads/writes and watches for any data change.
+
+4. Problem: Data Backup and Restore Needed
+   - If the cluster fails, we need a way to recover everything.
+   - ✅ Solution: etcd can be backed up and restored to recover full cluster state.
+
+Summary:
+- Cluster state storage → etcd stores everything as key-value data.
+- Need for consistency & HA → etcd is distributed and fault-tolerant.
+- Fast coordination → etcd gives real-time access and watches.
+- Backup and recovery → etcd backups help restore cluster state.
+
+Max limit is 1Mb to store secrets
+
+-----------------------------------------------------------------------------
+
+************architecture of K8s *****************************
+
+Organistaion ----Cluster
+Manager---Master Node
+project1----worker Node
+developer---pods
+
+inside a cluster their should be one master and one worker node 
+
+1.Master Node - it manges worker node and pods inside a container
+It has 4 components
+a.api manager
+act as a cluster gateway . each request comig to your cluster will first serve by api server
+it exposes few api to access operations going inside a cluster
+we can access api server using either a command line tool kubectl or K8s Ui
+kubectl get nodes
+kubectl get pods 
+
+
+b.scheduler -it usually schedules pods across multilple nodes 
+it goes and check memory and cpu usage of each woker node and bbased on that it schedule pod to specific node
+
+c. controller manger -it detects cluster state change like pod crashing , node crashing  
+
+
+- Keeps checking if the current state matches the desired state.
+- If not, it makes the changes (like restarting Pods).
+- Runs multiple controllers inside it, like:
+
+   - Node Controller → Checks node health and marks offline if needed.
+   - Replication Controller → Ensures the correct number of Pod replicas.
+   - Deployment Controller → Manages rolling updates and rollbacks.
+   - Job Controller → Manages batch jobs until they complete.
+   
+   
+d. etcd (Cluster Memory / Database)
+
+- A key-value store used to store all cluster data.
+- Stores info like: Pods, ConfigMaps, Secrets, Nodes, etc.
+- Only the API Server communicates directly with etcd.
+- Highly available and consistent (uses Raft protocol).
+- Can be backed up and restored for disaster recovery.
+
+Think of it as:
+→ "Brain/memory of Kubernetes" – everything is saved here.
+
+
+2. Worker Node :- it is a virtaual or physical machine which has pods in it 
+
+components of worker node :-  
+
+a. kubelet :- it is an agent running on each node , and kubelet communicate with master  node using API server
+
+
+ kubelet ensures that conatiners describe under prodsec are running healthy 
+ 
+b. kube-proxy : - it is an network agent 
+c. conatiner-runtime 
+
+-----------
+
+practical start yaha se 
+
+C:\Users\Babu>minikube version
+minikube version: v1.35.0
+commit: dd5d320e41b5451cdf3c01891bc4e13d189586ed-dirty
+
+C:\Users\Babu>minikube start --driver=docker
+* minikube v1.35.0 on Microsoft Windows 10 Pro 10.0.19045.5737 Build 19045.5737
+* Using the docker driver based on user configuration
+* Using Docker Desktop driver with root privileges
+* Starting "minikube" primary control-plane node in "minikube" cluster
+* Pulling base image v0.0.46 ...
+* Downloading Kubernetes v1.32.0 preload ...
+    > preloaded-images-k8s-v18-v1...:  333.57 MiB / 333.57 MiB  100.00% 2.34 Mi
+    > gcr.io/k8s-minikube/kicbase...:  500.31 MiB / 500.31 MiB  100.00% 2.57 Mi
+* Creating docker container (CPUs=2, Memory=1908MB) ...
+! Failing to connect to https://registry.k8s.io/ from inside the minikube container
+* To pull new external images, you may need to configure a proxy: https://minikube.sigs.k8s.io/docs/reference/networking/proxy/
+* Preparing Kubernetes v1.32.0 on Docker 27.4.1 ...
+  - Generating certificates and keys ...
+  - Booting up control plane ...
+  - Configuring RBAC rules ...
+* Configuring bridge CNI (Container Networking Interface) ...
+* Verifying Kubernetes components...
+  - Using image gcr.io/k8s-minikube/storage-provisioner:v5
+* Enabled addons: storage-provisioner, default-storageclass
+
+! C:\Program Files\Docker\Docker\resources\bin\kubectl.exe is version 1.30.2, which may have incompatibilities with Kubernetes 1.32.0.
+  - Want kubectl v1.32.0? Try 'minikube kubectl -- get pods -A'
+* Done! kubectl is now configured to use "minikube" cluster and "default" namespace by default
+
+C:\Users\Babu>
+
+
+
+
+
+
+
+
+
+
+
+C:\Users\Babu\Downloads\springboot-k8s-example>docker build -t springboot-k8s-demo:1.0 .
+[+] Building 5.9s (7/7) FINISHED                                                                                                                         docker:default
+ => [internal] load build definition from Dockerfile                                                                                                               0.2s
+ => => transferring dockerfile: 182B                                                                                                                               0.1s
+ => [internal] load metadata for docker.io/library/openjdk:17                                                                                                      5.0s
+ => [auth] library/openjdk:pull token for registry-1.docker.io                                                                                                     0.0s
+ => [internal] load .dockerignore                                                                                                                                  0.0s
+ => => transferring context: 2B                                                                                                                                    0.0s
+ => [internal] load build context                                                                                                                                  0.1s
+ => => transferring context: 2B                                                                                                                                    0.0s
+ => CANCELED [1/2] FROM docker.io/library/openjdk:17@sha256:528707081fdb9562eb819128a9f85ae7fe000e2fbaeaf9f87662e7b3f38cb7d8                                       0.2s
+ => => resolve docker.io/library/openjdk:17@sha256:528707081fdb9562eb819128a9f85ae7fe000e2fbaeaf9f87662e7b3f38cb7d8                                                0.0s
+ => => sha256:528707081fdb9562eb819128a9f85ae7fe000e2fbaeaf9f87662e7b3f38cb7d8 1.04kB / 1.04kB                                                                     0.0s
+ => => sha256:98f0304b3a3b7c12ce641177a99d1f3be56f532473a528fda38d53d519cafb13 954B / 954B                                                                         0.0s
+ => => sha256:5e28ba2b4cdb3a7c3bd0ee2e635a5f6481682b77eabf8b51a17ea8bfe1c05697 4.45kB / 4.45kB                                                                     0.0s
+ => ERROR [2/2] ADD target/springboot-k8s-demo.jar springboot-k8s-demo.jar                                                                                         0.0s
+------
+ > [2/2] ADD target/springboot-k8s-demo.jar springboot-k8s-demo.jar:
+------
+Dockerfile:3
+--------------------
+   1 |     FROM openjdk:17
+   2 |     EXPOSE 8080
+   3 | >>> ADD target/springboot-k8s-demo.jar springboot-k8s-demo.jar
+   4 |     ENTRYPOINT ["java","-jar","/springboot-k8s-demo.jar"]
+--------------------
+ERROR: failed to solve: failed to compute cache key: failed to calculate checksum of ref 7b36e0b4-fd81-4654-8da4-589c46cfbf6c::tm3pfmkd59j4imqsfwb3bgznl: "/target/springboot-k8s-demo.jar": not found
+
+View build details: docker-desktop://dashboard/build/default/default/m9zsj9lcnutlqgdskiogh071q
+
+
+
+
+
+
+
+------------------------------------------------------------------------
+
+kubectl create deployment spring-boot-k8s --image=springboot-k8s-demo:1.0 --port=8080
+kubectl get deployment
+
+kubectl describe deployment spring-boot-k8s
+
+spring-boot-k8s-994b94d96-2zlcr
+
+kubectl logs spring-boot-k8s-994b94d96-2zlcr
+
+kubectl expose deployment spring-boot-k8s --type=NodePort
+
+kubectl get service
+
+minikube dashboard
+
+
+cleanup 
+
+kubectl delete service spring-boot-k8s
+
+kubectl delete deployment service spring-boot-k8s
+
+kubectl get pods
+
+
+___________________________
+
+
